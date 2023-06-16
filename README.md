@@ -1,1 +1,1 @@
-# HH-seq analysi
+# The analysis code for HH-seq sequencing data
