@@ -1,0 +1,103 @@
+---
+title: "Untitled"
+output: html_document
+date: "2022-11-13"
+---
+
+# The CNV calls are colored by the type of alterations (AMP, amplification, BAMP, balanced amplification, DEL, deletion, CNLoH, copy-neutral loss of heterozygosity)
+
+
+# Results Display
+```{r}
+library(ggplot2)
+library(numbat)
+library(dplyr)
+library(glue)
+library(data.table)
+library(ggtree)
+library(stringr)
+library(tidygraph)
+library(patchwork)
+library(tidyr)
+library(ComplexHeatmap)
+library(circlize)
+
+cancer_type_used <- 'STAD'
+
+cnv_score_inner_cluster_subset <- read.csv(paste(cancer_type_used, '_cnv_score_ref_subsample.csv', sep = ''), header = TRUE, row.names = 1, check.names=F)
+cnv_score_inner_cluster_subset <- as.data.frame(t(cnv_score_inner_cluster_subset))
+cluster_extracted_df_subset <- read.csv(paste(cancer_type_used, '_cnv_ref_celltype_subsample.csv', sep = ''), header = TRUE, row.names = 1, check.names=F)
+gene_order <- read.csv(paste(cancer_type_used, '_gene_order.csv', sep = ''), header = TRUE, row.names = 1, check.names=F)
+
+gene_order$Chr <- as.integer(gene_order$chr)
+gene_order$Chr <- as.factor(gene_order$Chr)
+cluster_extracted_df_subset$Celltype <- as.character(cluster_extracted_df_subset$Celltype)
+
+gene_order <- gene_order[row.names(cnv_score_inner_cluster_subset), ]
+
+
+#https://jokergoo.github.io/2021/03/05/cluster-groups-in-complexheatmap/
+
+#https://colorbrewer2.org/#type=sequential&scheme=YlGnBu&n=3
+#https://xkcd.com/color/rgb/
+
+col_fun = colorRamp2(c(0.89, 0.985, 1.00, 1.015, 1.11), c("#0000FFFF", "#F0F0F0FF", "#F0F0F0FF", "#F0F0F0FF", "#FF0000FF"))
+
+text = list(
+    '1' = '1',
+    '2' = '2',
+    '3' = '3',
+    '4' = '4',
+    '5' = '5',
+    '6' = '6',
+    '7' = '7',
+    '8' = '8',
+    '9' = '9',
+    '10' = '10',
+    '11' = '11',
+    '12' = '12',
+    '13' = '13',
+    '14' = '14',
+    '15' = '15',
+    '16' = '16',
+    '17' = '17',
+    '18' = '18',
+    '19' = '19',
+    '20' = '20',
+    '21' = '21',
+    '22' = '22'
+)
+
+#ref_list = list(
+#    'Endothelial Cell' = 'Endo',
+#    'Fibroblast' = 'Fibro',
+#    'Macrophage' = 'Macro'
+#    'Mesothelial cell' = 'Mesen',
+#    'Smooth muscle cell' = 'Smooth'
+#)
+
+p <- Heatmap(cnv_score_inner_cluster_subset,
+        cluster_rows = FALSE,
+        cluster_columns = FALSE,
+        show_row_names = FALSE, show_column_names = FALSE,
+        col = col_fun,
+        row_split = gene_order$Chr,
+        row_gap = unit(0, "mm"), border = TRUE,
+        column_split = cluster_extracted_df_subset$Celltype,
+        column_title = NULL, row_title = "Chromosome",
+        name = "CNV Score",
+#        left_annotation = rowAnnotation(df = gene_order['Chr']),
+        left_annotation = rowAnnotation(textbox = anno_textbox(gene_order$Chr, text, background_gp = gpar(fill = "white", col = "white"), by = "anno_block")),
+#        top_annotation = HeatmapAnnotation(textbox = anno_textbox(cluster_extracted_df_subset$Celltype, ref_list, background_gp = gpar(fill = "white", col = "white"), by = "anno_block")),
+        top_annotation = HeatmapAnnotation(df = cluster_extracted_df_subset['Celltype']),
+        heatmap_width = unit(10, "cm"), 
+    heatmap_height = unit(30, "cm")
+)
+
+pdf(paste(cancer_type_used, '_ref_subsample.pdf', sep = ''), height = 20, width = 12)
+print(p)
+dev.off()
+```
+
+
+
